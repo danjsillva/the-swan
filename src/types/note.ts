@@ -35,17 +35,3 @@ export type Order = {
   fileText: string;
   fileBuffer: Buffer;
 };
-
-// export type Note = {
-//   number: string;
-//   date: Date;
-//   stockExchange: STOCK_EXCHANGE;
-//   broker: BROKER;
-//   currency: CURRENCY;
-//   orders: Order[];
-//   totalOperations: number;
-//   totalFees: number;
-//   fileName: string;
-//   fileText: string;
-//   fileBuffer: Buffer;
-// };

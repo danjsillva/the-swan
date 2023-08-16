@@ -10,42 +10,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Order {
-  id       Int    @id @default(autoincrement())
-  date     DateTime
-  type     String
-  ticker   String
-  quantity Float
-  price    Float
-  fees     Float
-  total    Float
+enum BROKER {
+  AVENUE
+  INTER
+}
 
-  note   Note @relation(fields: [noteId], references: [id])
-  noteId Int
+enum CURRENCY {
+  BRL
+  USD
+}
+
+enum STOCK_EXCHANGE {
+  B3
+  NYSE
+  NASDAQ
+}
+
+enum TYPE {
+  BUY
+  SELL
+}
+
+model Order {
+  id            Int            @id @default(autoincrement())
+  date          DateTime
+  noteNumber    String
+  broker        BROKER
+  currency      CURRENCY
+  stockExchange STOCK_EXCHANGE
+  type          TYPE
+  ticker        String
+  quantity      Float
+  price         Float
+  fees          Float
+
+  fileName   String
+  fileText   String
+  fileBuffer String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("orders")
-}
-
-model Note {
-  id              Int      @id @default(autoincrement())
-  number          String
-  date            DateTime
-  stockExchange   String
-  broker          String
-  currency        String
-  totalOperations Float
-  totalFees       Float
-  fileName        String
-  fileText        String
-  fileBuffer      String
-
-  orders Order[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("notes")
 }
