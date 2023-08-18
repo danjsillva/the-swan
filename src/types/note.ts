@@ -19,7 +19,7 @@ export enum CURRENCY {
   USD = "USD",
 }
 
-export type Order = {
+export type IOrder = {
   id?: string;
   date: Date;
   noteNumber: string;

@@ -49,6 +49,7 @@
     "eslint": "8.47.0",
     "eslint-config-next": "13.4.13",
     "lucide-react": "^0.267.0",
+    "mongoose": "^7.4.3",
     "next": "13.4.13",
     "pdf-parse": "^1.1.1",
     "postcss": "8.4.27",
@@ -63,7 +64,6 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@types/pdf-parse": "^1.1.1",
-    "prisma": "^5.1.1"
+    "@types/pdf-parse": "^1.1.1"
   }
 }

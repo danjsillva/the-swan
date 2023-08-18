@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
 import {
-  Order,
+  IOrder,
   BROKER,
   CURRENCY,
   ORDER_TYPE,
@@ -12,7 +12,7 @@ export function getAvenueOrders(
   name: string,
   text: string,
   buffer: Buffer
-): Order[] {
+): IOrder[] {
   const lines = text
     .split(/\r?\n|\r|\n/g)
     .slice(
@@ -23,7 +23,7 @@ export function getAvenueOrders(
     throw new Error("Invalid note");
   }
 
-  const orders = lines.reduce((result, value, index, array) => {
+  const orders: IOrder[] = lines.reduce((result, value, index, array) => {
     if (
       dayjs(value, "MM/DD/YY").isValid() &&
       dayjs(array[index + 1], "MM/DD/YY").isValid()
@@ -70,7 +70,7 @@ export function getInterOrders(
   name: string,
   text: string,
   buffer: Buffer
-): Order[] {
+): IOrder[] {
   const lines = text.split(/\r?\n|\r|\n/g);
 
   const date = dayjs(
@@ -190,7 +190,7 @@ export function getInterOrders(
     irrfFee +
     otherFee;
 
-  const orders: Order[] = lines
+  const orders: IOrder[] = lines
     .filter((line) => line.includes("1-Bovespa"))
     .map((line) => {
       const [market, _marketType, ticker, ..._rest] = line

@@ -14,11 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 dayjs.locale("pt-br");
 
 export default function Home() {
-  const [data, setData] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -43,7 +44,30 @@ export default function Home() {
       })
     );
 
-    setData(data);
+    setNotes(data);
+
+    console.log(data);
+
+    event.target.files = null;
+  };
+
+  const handleImportClick = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+
+    const data = await Promise.all(
+      notes.map(async (note) => {
+        const response = await fetch("/api/notes", {
+          method: "POST",
+          body: JSON.stringify(note),
+        });
+
+        return await response.json();
+      })
+    );
+
+    alert("Success!");
 
     console.log(data);
   };
@@ -61,8 +85,17 @@ export default function Home() {
       </section>
 
       <section className="grid w-full items-center gap-1.5">
-        {/* {JSON.stringify(data)} */}
-        {data.map((note) => (
+        <Button
+          type="button"
+          onClick={handleImportClick}
+          disabled={notes.length === 0}
+        >
+          Import
+        </Button>
+
+        {/* {JSON.stringify(notes)} */}
+
+        {notes.map((note) => (
           <Table key={note[0].noteNumber}>
             <TableHeader>
               <TableRow>
@@ -102,9 +135,12 @@ export default function Home() {
                   <TableCell>
                     {order.currency} {(order.quantity * order.price).toFixed(2)}
                   </TableCell>
-                  <TableCell>{order.currency} {order.fees.toFixed(2)}</TableCell>
                   <TableCell>
-                    {order.currency} {(order.quantity * order.price + order.fees).toFixed(2)}
+                    {order.currency} {order.fees.toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    {order.currency}{" "}
+                    {(order.quantity * order.price + order.fees).toFixed(2)}
                   </TableCell>
                   <TableCell>{order.fileName}</TableCell>
                 </TableRow>

@@ -3,9 +3,9 @@ import PDFParser from "pdf-parse";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-dayjs.extend(customParseFormat);
-
 import { getAvenueOrders, getInterOrders } from "./template-helper";
+
+dayjs.extend(customParseFormat);
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +23,15 @@ export async function POST(request: NextRequest) {
     const text = pdf.text;
 
     if (template === "AVENUE") {
-      return NextResponse.json(getAvenueOrders(file.name, text, buffer));
+      const orders = getAvenueOrders(file.name, text, buffer);
+
+      return NextResponse.json(orders);
     }
 
     if (template === "INTER") {
-      return NextResponse.json(getInterOrders(file.name, text, buffer));
+      const orders = getInterOrders(file.name, text, buffer);
+
+      return NextResponse.json(orders);
     }
 
     return new Response("Invalid template", { status: 400 });
