@@ -30,3 +30,17 @@ export async function POST(request: NextRequest) {
     return new Response(error.message, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    await connectMongo();
+
+    const persistedOrders = await Order.find({});
+
+    return NextResponse.json(persistedOrders);
+  } catch (error) {
+    console.error(error);
+
+    return new Response(error.message, { status: 500 });
+  }
+}

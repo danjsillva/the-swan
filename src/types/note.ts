@@ -20,7 +20,7 @@ export enum CURRENCY {
 }
 
 export type IOrder = {
-  id?: string;
+  _id?: string;
   date: Date;
   noteNumber: string;
   broker: BROKER;
