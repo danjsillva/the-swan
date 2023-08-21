@@ -16,10 +16,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
+import { INote, IOrder } from "@/types/note";
+
 dayjs.locale("pt-br");
 
 export default function Home() {
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<INote>([]);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>

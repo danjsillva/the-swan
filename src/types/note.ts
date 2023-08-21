@@ -35,3 +35,5 @@ export type IOrder = {
   fileText: string;
   fileBuffer: Buffer;
 };
+
+export type INote = IOrder[];
