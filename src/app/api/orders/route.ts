@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import connectMongo from "@/database/config";
 import Order from "@/database/models/order";
 
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
         const persistedOrder = await Order.findOne({
           date: order.date,
           noteNumber: order.noteNumber,
+          type: order.type,
+          ticker: order.ticker,
+          price: order.price
         });
 
         if (persistedOrder) {
@@ -31,11 +35,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectMongo();
 
-    const persistedOrders = await Order.find({});
+    const url = new URL(request.url);
+    const ticker = url.searchParams.get("ticker");
+
+    const persistedOrders = await Order.find({
+      ticker: { $regex: new RegExp(ticker, "i")}
+    }).select({
+      fileText: 0,
+      fileBuffer: 0,
+    });
 
     return NextResponse.json(persistedOrders);
   } catch (error) {

@@ -11,6 +11,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
@@ -48,8 +49,6 @@ export default function Home() {
 
     setNotes(data);
 
-    console.log(data);
-
     event.target.files = null;
   };
 
@@ -60,7 +59,7 @@ export default function Home() {
 
     const data = await Promise.all(
       notes.map(async (note) => {
-        const response = await fetch("/api/notes", {
+        const response = await fetch("/api/orders", {
           method: "POST",
           body: JSON.stringify(note),
         });
@@ -71,46 +70,47 @@ export default function Home() {
 
     alert("Success!");
 
-    console.log(data);
+    setNotes([]);
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <section className="grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="picture">Brokerage Note</Label>
-        <Input
-          type="file"
-          onChange={handleFileChange}
-          accept="application/pdf"
-          multiple
-        />
-      </section>
+    <main className="p-7">
+      <section className="flex items-end gap-5">
+        <div>
+          <Label htmlFor="file">Brokerage Note</Label>
+          <Input
+            name="file"
+            type="file"
+            onChange={handleFileChange}
+            accept="application/pdf"
+            multiple
+          />
+        </div>
 
-      <section className="grid w-full items-center gap-1.5">
         <Button
           type="button"
           onClick={handleImportClick}
           disabled={notes.length === 0}
         >
-          Import
+          Import orders
         </Button>
+      </section>
 
-        {/* {JSON.stringify(notes)} */}
-
-        {notes.map((note) => (
-          <Table key={note[0].noteNumber}>
+      {notes.map((note) => (
+        <section key={note[0].noteNumber} className="rounded-md border mt-5">
+          <Table>
             <TableHeader>
               <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Broker</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Ticker</TableCell>
-                <TableCell>Quatity</TableCell>
-                <TableCell>Price</TableCell>
-                <TableCell>Net total</TableCell>
-                <TableCell>Fees</TableCell>
-                <TableCell>Overall cost</TableCell>
-                <TableCell>File name</TableCell>
+                <TableHead>Date</TableHead>
+                <TableHead>Broker</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Ticker</TableHead>
+                <TableHead>Quatity</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Net total</TableHead>
+                <TableHead>Fees</TableHead>
+                <TableHead>Overall cost</TableHead>
+                <TableHead>File name</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -149,8 +149,8 @@ export default function Home() {
               ))}
             </TableBody>
           </Table>
-        ))}
-      </section>
+        </section>
+      ))}
     </main>
   );
 }
