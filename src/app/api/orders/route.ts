@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
     }).select({
       fileText: 0,
       fileBuffer: 0,
+    }).sort({
+      date: -1
     });
 
     return NextResponse.json(persistedOrders);

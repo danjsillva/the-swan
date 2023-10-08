@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
 import classNames from "classnames";
@@ -16,16 +16,42 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
-import { INote, IOrder } from "@/types/note";
+import { INote } from "@/types/note";
 
 dayjs.locale("pt-br");
 
 export default function Home() {
+  const [tickers, setTickers] = useState<string[]>([]);
   const [notes, setNotes] = useState<INote>([]);
 
+  useEffect(() => {
+    getTickers();
+  }, []);
+
+  const getTickers = async () => {
+    const response = await fetch("/api/tickers", {
+      method: "GET",
+      cache: "no-cache",
+    });
+
+    const data = await response.json();
+
+    console.table(data);
+
+    setTickers(data);
+  };
+
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (!event.target.files) {
       return;
@@ -41,11 +67,14 @@ export default function Home() {
         const response = await fetch("/api/parse", {
           method: "POST",
           body: form,
+          cache: "no-cache",
         });
 
         return await response.json();
-      })
+      }),
     );
+
+    console.table(data);
 
     setNotes(data);
 
@@ -53,7 +82,7 @@ export default function Home() {
   };
 
   const handleImportClick = async (
-    event: React.MouseEvent<HTMLButtonElement>
+    event: React.MouseEvent<HTMLButtonElement>,
   ) => {
     event.preventDefault();
 
@@ -62,11 +91,14 @@ export default function Home() {
         const response = await fetch("/api/orders", {
           method: "POST",
           body: JSON.stringify(note),
+          cache: "no-cache",
         });
 
         return await response.json();
-      })
+      }),
     );
+
+    console.table(data);
 
     alert("Success!");
 
@@ -94,6 +126,21 @@ export default function Home() {
         >
           Import orders
         </Button>
+
+        <Select onValueChange={(value) => {
+          window.location.href = `/tickers?ticker=${value}`;
+        }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Ticker" />
+          </SelectTrigger>
+          <SelectContent>
+            {tickers.map((ticker) => (
+              <SelectItem key={ticker} value={ticker}>
+                {ticker}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </section>
 
       {notes.map((note) => (
@@ -127,8 +174,19 @@ export default function Home() {
                   <TableCell>
                     {dayjs(order.date).format("DD/MM/YYYY")}
                   </TableCell>
-                  <TableCell>{order.broker}</TableCell>
-                  <TableCell>{order.type}</TableCell>
+                  <TableCell>
+                    {order.broker} ({order.noteNumber})
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={classNames({
+                        "bg-blue-500": order.type === "B",
+                        "bg-red-500": order.type === "S",
+                      })}
+                    >
+                      {order.type}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{order.ticker}</TableCell>
                   <TableCell>{order.quantity}</TableCell>
                   <TableCell>

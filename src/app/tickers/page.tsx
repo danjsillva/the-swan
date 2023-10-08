@@ -22,7 +22,10 @@ export default async function TickerPage({
   const ticker = searchParams?.ticker;
 
   const response = await fetch(
-    `${process.env.BASE_URL}/api/orders?ticker=${ticker}`
+    `${process.env.BASE_URL}/api/orders?ticker=${ticker}`,
+    {
+      cache: "no-cache",
+    },
   );
 
   const orders = await response.json();
@@ -39,13 +42,13 @@ export default async function TickerPage({
 
       return acc;
     },
-    {}
+    {},
   );
 
   const totalUntilYear = Object.keys(ordersByYear).reduce(
     (acc: { [key: string]: any }, year: string) => {
       const ordersUntilYear = orders.filter(
-        (order: IOrder) => dayjs(order.date).format("YYYY") <= year
+        (order: IOrder) => dayjs(order.date).format("YYYY") <= year,
       );
 
       const quantityUntilYear = ordersUntilYear.reduce(
@@ -56,7 +59,7 @@ export default async function TickerPage({
             return acc - order.quantity;
           }
         },
-        0
+        0,
       );
 
       const priceUntilYear = ordersUntilYear.reduce(
@@ -67,14 +70,14 @@ export default async function TickerPage({
             return acc - order.quantity * order.price;
           }
         },
-        0
+        0,
       );
 
       const feesUntilYear = ordersUntilYear.reduce(
         (acc: number, order: IOrder) => {
           return acc + order.fees;
         },
-        0
+        0,
       );
 
       acc[year] = {
@@ -86,7 +89,7 @@ export default async function TickerPage({
 
       return acc;
     },
-    {}
+    {},
   );
 
   return (
@@ -97,7 +100,7 @@ export default async function TickerPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Year</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead>Broker</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Ticker</TableHead>
@@ -114,52 +117,58 @@ export default async function TickerPage({
           <TableBody>
             {Object.keys(ordersByYear).map((year) => (
               <Fragment key={year}>
-                {ordersByYear[year].map((order: IOrder) => (
-                  <TableRow
-                    key={`${order.date}-${order.ticker}-${order.quantity}-${order.price}`}
-                    className={classNames({
-                      "text-red-500":
-                        dayjs(order.date).format() !==
-                        dayjs(order.fileName.slice(0, 10)).format(),
-                    })}
-                  >
-                    <TableCell>
-                      {dayjs(order.date).format("DD/MM/YYYY")}
-                    </TableCell>
-                    <TableCell>{order.broker}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={classNames({
-                          "bg-blue-500": order.type === "B",
-                          "bg-red-500": order.type === "S",
-                        })}
-                      >
-                        {order.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{order.ticker}</TableCell>
-                    <TableCell>{order.quantity}</TableCell>
-                    <TableCell>
-                      {order.currency} {order.price.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      {order.currency}{" "}
-                      {(order.price + order.fees / order.quantity).toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      {order.currency}{" "}
-                      {(order.quantity * order.price).toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      {order.currency} {order.fees.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      {order.currency}{" "}
-                      {(order.quantity * order.price + order.fees).toFixed(2)}
-                    </TableCell>
-                    <TableCell>{order.fileName}</TableCell>
-                  </TableRow>
-                ))}
+                {ordersByYear[year]
+                  .sort((a: IOrder, b: IOrder) => {
+                    return dayjs(a.date).isBefore(dayjs(b.date)) ? -1 : 1;
+                  })
+                  .map((order: IOrder) => (
+                    <TableRow
+                      key={`${order.date}-${order.ticker}-${order.quantity}-${order.price}`}
+                      className={classNames({
+                        "text-red-500":
+                          dayjs(order.date).format() !==
+                          dayjs(order.fileName.slice(0, 10)).format(),
+                      })}
+                    >
+                      <TableCell>
+                        {dayjs(order.date).format("DD/MM/YYYY")}
+                      </TableCell>
+                      <TableCell>
+                        {order.broker} ({order.noteNumber})
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={classNames({
+                            "bg-blue-500": order.type === "B",
+                            "bg-red-500": order.type === "S",
+                          })}
+                        >
+                          {order.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{order.ticker}</TableCell>
+                      <TableCell>{order.quantity}</TableCell>
+                      <TableCell>
+                        {order.currency} {order.price.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {order.currency}{" "}
+                        {(order.price + order.fees / order.quantity).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {order.currency}{" "}
+                        {(order.quantity * order.price).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {order.currency} {order.fees.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {order.currency}{" "}
+                        {(order.quantity * order.price + order.fees).toFixed(2)}
+                      </TableCell>
+                      <TableCell>{order.fileName}</TableCell>
+                    </TableRow>
+                  ))}
 
                 <TableRow className="font-bold">
                   <TableCell>
@@ -194,7 +203,7 @@ export default async function TickerPage({
                     {ordersByYear[year][0].currency}{" "}
                     {(
                       totalUntilYear[year].price *
-                        totalUntilYear[year].quantity +
+                      totalUntilYear[year].quantity +
                       totalUntilYear[year].fees
                     ).toFixed(2)}
                   </TableCell>
