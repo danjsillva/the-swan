@@ -31,7 +31,7 @@ dayjs.locale("pt-br");
 
 export default function Home() {
   const [tickers, setTickers] = useState<string[]>([]);
-  const [notes, setNotes] = useState<INote>([]);
+  const [notes, setNotes] = useState<INote[]>([]);
 
   useEffect(() => {
     getTickers();
@@ -164,7 +164,7 @@ export default function Home() {
             <TableBody>
               {note.map((order) => (
                 <TableRow
-                  key={order.ticker}
+                  key={order.ticker + order.price + order.quantity}
                   className={classNames({
                     "text-red-500":
                       dayjs(order.date).format() !==
