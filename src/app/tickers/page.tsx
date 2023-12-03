@@ -1,7 +1,16 @@
-import { Fragment } from "react";
+"use client";
+
+import React, { Fragment, useEffect, useState } from "react";
 import dayjs from "dayjs";
 import classNames from "classnames";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,87 +23,167 @@ import { Badge } from "@/components/ui/badge";
 
 import { IOrder } from "@/types/note";
 
-export default async function TickerPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const ticker = searchParams?.ticker;
+export default function TickerPage() {
+  const [tickers, setTickers] = useState<string[]>([]);
+  const [ticker, setTicker] = useState<string>(null);
+  const [orders, setOrders] = useState<IOrder[]>([]);
+  const [ordersByYear, setOrdersByYear] = useState<{ [key: string]: IOrder[] }>(
+    {},
+  );
+  const [totalUntilYear, setTotalUntilYear] = useState<{
+    [key: string]: IOrder;
+  }>({});
 
-  const response = await fetch(
-    `${process.env.BASE_URL}/api/orders?ticker=${ticker}`,
-    {
+  useEffect(() => {
+    getTickers();
+  }, []);
+
+  useEffect(() => {
+    if (ticker) {
+      getOrders(ticker);
+    }
+  }, [ticker]);
+
+  const getTickers = async () => {
+    const response = await fetch("/api/tickers", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      method: "GET",
       cache: "no-cache",
-    },
-  );
+    });
 
-  const orders = await response.json();
+    if (!response.ok) {
+      console.error(response);
 
-  const ordersByYear = orders.reduce(
-    (acc: { [key: string]: IOrder[] }, order: IOrder) => {
-      const year = Number(dayjs(order.date).format("YYYY"));
+      alert("Error while fetching tickers");
 
-      if (acc[year]) {
-        acc[year].push(order);
-      } else {
-        acc[year] = [order];
-      }
+      window.location.href = "/login";
+    }
 
-      return acc;
-    },
-    {},
-  );
+    const data = await response.json();
 
-  const totalUntilYear = Object.keys(ordersByYear).reduce(
-    (acc: { [key: string]: any }, year: string) => {
-      const ordersUntilYear = orders.filter(
-        (order: IOrder) => dayjs(order.date).format("YYYY") <= year,
-      );
+    console.table(data);
 
-      const quantityUntilYear = ordersUntilYear.reduce(
-        (acc: number, order: IOrder) => {
-          if (order.type === "B") {
-            return acc + order.quantity;
-          } else {
-            return acc - order.quantity;
+    setTickers([
+      ...new Set(
+        data.map((ticker: string) => {
+          if (ticker.at(-1) === "F" && !isNaN(Number(ticker.at(-2)))) {
+            return ticker.slice(0, -1);
           }
-        },
-        0,
-      );
 
-      const priceUntilYear = ordersUntilYear.reduce(
-        (acc: number, order: IOrder) => {
-          if (order.type === "B") {
-            return acc + order.quantity * order.price;
-          } else {
-            return acc - order.quantity * order.price;
-          }
-        },
-        0,
-      );
+          return ticker;
+        }),
+      ),
+    ]);
+  };
 
-      const feesUntilYear = ordersUntilYear.reduce(
-        (acc: number, order: IOrder) => {
-          return acc + order.fees;
-        },
-        0,
-      );
+  const getOrders = async (ticker: string) => {
+    const response = await fetch(`/api/orders?ticker=${ticker}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      method: "GET",
+      cache: "no-cache",
+    });
 
-      acc[year] = {
-        quantity: quantityUntilYear,
-        price: priceUntilYear / quantityUntilYear,
-        netTotal: priceUntilYear,
-        fees: feesUntilYear,
-      };
+    if (!response.ok) {
+      console.error(response);
 
-      return acc;
-    },
-    {},
-  );
+      alert("Error while fetching orders");
+
+      window.location.href = "/login";
+    }
+
+    const orders = await response.json();
+
+    setOrders(orders);
+
+    const ordersByYear = orders.reduce(
+      (acc: { [key: string]: IOrder[] }, order: IOrder) => {
+        const year = Number(dayjs(order.date).format("YYYY"));
+
+        if (acc[year]) {
+          acc[year].push(order);
+        } else {
+          acc[year] = [order];
+        }
+
+        return acc;
+      },
+      {},
+    );
+
+    setOrdersByYear(ordersByYear);
+
+    const totalUntilYear = Object.keys(ordersByYear).reduce(
+      (acc: { [key: string]: IOrder }, year: string) => {
+        const ordersUntilYear = orders.filter(
+          (order: IOrder) => dayjs(order.date).format("YYYY") <= year,
+        );
+
+        const quantityUntilYear = ordersUntilYear.reduce(
+          (acc: number, order: IOrder) => {
+            if (order.type === "B") {
+              return acc + order.quantity;
+            } else {
+              return acc - order.quantity;
+            }
+          },
+          0,
+        );
+
+        const priceUntilYear = ordersUntilYear.reduce(
+          (acc: number, order: IOrder) => {
+            if (order.type === "B") {
+              return acc + order.quantity * order.price;
+            } else {
+              return acc - order.quantity * order.price;
+            }
+          },
+          0,
+        );
+
+        const feesUntilYear = ordersUntilYear.reduce(
+          (acc: number, order: IOrder) => {
+            return acc + order.fees;
+          },
+          0,
+        );
+
+        acc[year] = {
+          quantity: quantityUntilYear,
+          price: priceUntilYear / quantityUntilYear,
+          netTotal: priceUntilYear,
+          fees: feesUntilYear,
+        };
+
+        return acc;
+      },
+      {},
+    );
+
+    setTotalUntilYear(totalUntilYear);
+  };
 
   return (
     <main className="p-7">
-      <h1 className="text-4xl font-bold">{ticker}</h1>
+      <section className="flex justify-between">
+        <h1 className="text-3xl font-bold">Tickers</h1>
+
+        <Select
+          onValueChange={(value) => {
+            setTicker(value);
+          }}
+        >
+          <SelectTrigger className="w-80">
+            <SelectValue placeholder="Tickers" value={ticker} />
+          </SelectTrigger>
+          <SelectContent className="overflow-y-auto max-h-96">
+            {tickers.map((ticker) => (
+              <SelectItem key={ticker} value={ticker}>
+                {ticker}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </section>
 
       <section className="rounded-md border mt-5">
         <Table>
@@ -203,7 +292,7 @@ export default async function TickerPage({
                     {ordersByYear[year][0].currency}{" "}
                     {(
                       totalUntilYear[year].price *
-                      totalUntilYear[year].quantity +
+                        totalUntilYear[year].quantity +
                       totalUntilYear[year].fees
                     ).toFixed(2)}
                   </TableCell>

@@ -3,9 +3,24 @@ import { NextRequest, NextResponse } from "next/server";
 import connectMongo from "@/database/config";
 import Order from "@/database/models/order";
 import { IOrder } from "@/types/note";
+import { USER_ROLES } from "@/types/user";
+import { getUserRequest } from "@/utils/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    if (user.role !== USER_ROLES.ADMIN) {
+      return NextResponse.json(
+        { message: "User not authorized" },
+        { status: 401 },
+      );
+    }
+
     await connectMongo();
 
     const data = await request.json();
@@ -50,6 +65,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
     await connectMongo();
 
     const url = new URL(request.url);
@@ -59,9 +80,13 @@ export async function GET(request: NextRequest) {
       return new Response("Ticker is required", { status: 400 });
     }
 
-    const persistedOrders = await Order.find({
-      ticker: { $regex: new RegExp(ticker, "i") },
-    })
+    const filter = { $or: [{ ticker: ticker }] };
+
+    if (!isNaN(Number(ticker.at(-1)))) {
+      filter.$or.push({ ticker: `${ticker}F` });
+    }
+
+    const persistedOrders = await Order.find(filter)
       .select({
         fileText: 0,
         fileBuffer: 0,

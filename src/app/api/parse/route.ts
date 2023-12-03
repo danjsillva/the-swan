@@ -3,12 +3,19 @@ import PDFParser from "pdf-parse";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-import { getAvenueOrders, getInterOrders } from "./template-helper";
+import { getAvenueOrders, getInterOrders } from "@/utils/orders";
+import { getUserRequest } from "@/utils/auth";
 
 dayjs.extend(customParseFormat);
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
     const data = await request.formData();
     const file: File | null = data.get("file") as unknown as File;
 
